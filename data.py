@@ -11,12 +11,13 @@ import copy
 from argoverse.data_loading.argoverse_forecasting_loader import ArgoverseForecastingLoader
 from argoverse.map_representation.map_api import ArgoverseMap
 from skimage.transform import rotate
-
+from planning import model_generator
 
 class ArgoDataset(Dataset):
-    def __init__(self, split, config, train=True):
+    def __init__(self, split, config, train=True,test=False):
         self.config = config
         self.train = train
+        self.test = test
         
         if 'preprocess' in config and config['preprocess']:
             if train:
@@ -25,7 +26,7 @@ class ArgoDataset(Dataset):
                 self.split = np.load(self.config['preprocess_val'], allow_pickle=True)
         else:
             self.avl = ArgoverseForecastingLoader(split)
-            self.avl.seq_list = sorted(self.avl.seq_list)
+            self.avl.seq_list = sorted(self.avl.seq_list) ## the index is based on sorting
             self.am = ArgoverseMap()
 
         if 'raster' in config and config['raster']:
@@ -33,6 +34,7 @@ class ArgoDataset(Dataset):
             self.map_query = MapQuery(config['map_scale'])
             
     def __getitem__(self, idx):
+        # print('index',idx)
         if 'preprocess' in self.config and self.config['preprocess']:
             data = self.split[idx]
 
@@ -81,7 +83,7 @@ class ArgoDataset(Dataset):
                 data['raster'] = raster
             return data
 
-        data = self.read_argo_data(idx)
+        data ,df = self.read_argo_data(idx)
         data = self.get_obj_feats(data)
         data['idx'] = idx
 
@@ -96,6 +98,14 @@ class ArgoDataset(Dataset):
             return data
 
         data['graph'] = self.get_lane_graph(data)
+        if self.test:
+            dfs, trj = model_generator(df,start=0) ## for testing data, the length only has 20, predict based on first 20 obs
+        else:
+            dfs, trj = model_generator(df,start=19) ## for non-testing data, the length is 50
+        
+        data['dfs']=dfs
+        data['trj']=trj
+        
         return data
     
     def __len__(self):
@@ -108,7 +118,7 @@ class ArgoDataset(Dataset):
         city = copy.deepcopy(self.avl[idx].city)
 
         """TIMESTAMP,TRACK_ID,OBJECT_TYPE,X,Y,CITY_NAME"""
-        df = copy.deepcopy(self.avl[idx].seq_df)
+        df = copy.deepcopy(self.avl[idx].seq_df) ##put this data into the planning module
         
         agt_ts = np.sort(np.unique(df['TIMESTAMP'].values))
         mapping = dict()
@@ -143,9 +153,9 @@ class ArgoDataset(Dataset):
         data['city'] = city
         data['trajs'] = [agt_traj] + ctx_trajs
         data['steps'] = [agt_step] + ctx_steps
-        return data
+        return data, df
     
-    def get_obj_feats(self, data):
+    def get_obj_feats(self, data): ##i should change the get features here:
         orig = data['trajs'][0][19].copy().astype(np.float32)
 
         if self.train and self.config['rot_aug']:
@@ -378,7 +388,7 @@ class ArgoTestDataset(ArgoDataset):
             self.am = ArgoverseMap()
             
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx): ## the function return should be here
         if 'preprocess' in self.config and self.config['preprocess']:
             data = self.split[idx]
             data['argo_id'] = int(self.avl.seq_list[idx].name[:-4]) #160547
@@ -418,10 +428,15 @@ class ArgoTestDataset(ArgoDataset):
                 data = new_data
             return data
 
-        data = self.read_argo_data(idx)
+        data , df= self.read_argo_data(idx)
         data = self.get_obj_feats(data)
         data['graph'] = self.get_lane_graph(data)
         data['idx'] = idx
+        
+        dfs, trj = model_generator(df)
+        data['dfs']=dfs
+        data['trj']=trj
+                
         return data
     
     def __len__(self):

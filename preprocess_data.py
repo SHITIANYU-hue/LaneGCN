@@ -19,7 +19,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from data import ArgoDataset as Dataset, from_numpy, ref_copy, collate_fn
-from utils import Logger, load_pretrain, gpu
+from utils.utils import Logger, load_pretrain, gpu
+
 
 os.umask(0)
 
@@ -53,9 +54,9 @@ def main():
 
 
 
-    val(config)
+    # val(config)
     test(config)
-    train(config)
+    # train(config)
 
 
 def train(config):
@@ -71,7 +72,7 @@ def train(config):
         drop_last=False,
     )
 
-    stores = [None for x in range(205942)]
+    stores = [None for x in range(1)]
     t = time.time()
     for i, data in enumerate(tqdm(train_loader)):
         data = dict(data)
@@ -88,6 +89,8 @@ def train(config):
                 "gt_preds",
                 "has_preds",
                 "graph",
+                "dfs",
+                "trj",
             ]:
                 store[key] = to_numpy(data[key][j])
                 if key in ["graph"]:
@@ -124,7 +127,7 @@ def val(config):
         collate_fn=collate_fn,
         pin_memory=True,
     )
-    stores = [None for x in range(39472)]
+    stores = [None for x in range(1)] ## need to make sure the length of dataset is aligned with the length of stores
 
     t = time.time()
     for i, data in enumerate(tqdm(val_loader)):
@@ -142,6 +145,8 @@ def val(config):
                 "gt_preds",
                 "has_preds",
                 "graph",
+                "dfs",
+                "trj",
             ]:
                 store[key] = to_numpy(data[key][j])
                 if key in ["graph"]:
@@ -166,7 +171,7 @@ def val(config):
 
 
 def test(config):
-    dataset = Dataset(config["test_split"], config, train=False)
+    dataset = Dataset(config["test_split"], config, train=False,test=True)
     test_loader = DataLoader(
         dataset,
         batch_size=config["val_batch_size"],
@@ -175,7 +180,7 @@ def test(config):
         collate_fn=collate_fn,
         pin_memory=True,
     )
-    stores = [None for x in range(78143)]
+    stores = [None for x in range(10)]
 
     t = time.time()
     for i, data in enumerate(tqdm(test_loader)):
@@ -191,6 +196,8 @@ def test(config):
                 "theta",
                 "rot",
                 "graph",
+                "dfs",
+                "trj",
             ]:
                 store[key] = to_numpy(data[key][j])
                 if key in ["graph"]:

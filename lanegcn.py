@@ -13,7 +13,7 @@ from torch import Tensor, nn
 from torch.nn import functional as F
 
 from data import ArgoDataset, collate_fn
-from utils import gpu, to_long,  Optimizer, StepLR
+from utils.utils import gpu, to_long,  Optimizer, StepLR
 
 from layers import Conv1d, Res1d, Linear, LinearRes, Null
 from numpy import float64, ndarray
@@ -56,20 +56,20 @@ config["val_workers"] = config["workers"]
 """Dataset"""
 # Raw Dataset
 config["train_split"] = os.path.join(
-    root_path, "dataset/train/data"
+    root_path, "dataset_small/train/data"
 )
-config["val_split"] = os.path.join(root_path, "dataset/val/data")
-config["test_split"] = os.path.join(root_path, "dataset/test_obs/data")
+config["val_split"] = os.path.join(root_path, "dataset_small/val/data")
+config["test_split"] = os.path.join(root_path, "dataset_small/test_obs/data")
 
 # Preprocessed Dataset
 config["preprocess"] = True # whether use preprocess or not
 config["preprocess_train"] = os.path.join(
-    root_path, "dataset","preprocess", "train_crs_dist6_angle90.p"
+    root_path, "dataset_small","preprocess", "train_crs_dist6_angle90.p"
 )
 config["preprocess_val"] = os.path.join(
-    root_path,"dataset", "preprocess", "val_crs_dist6_angle90.p"
+    root_path,"dataset_small", "preprocess", "val_crs_dist6_angle90.p"
 )
-config['preprocess_test'] = os.path.join(root_path, "dataset",'preprocess', 'test_test.p')
+config['preprocess_test'] = os.path.join(root_path, "dataset_small",'preprocess', 'test_test.p')
 
 """Model"""
 config["rot_aug"] = False
