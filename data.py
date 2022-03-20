@@ -11,7 +11,7 @@ import copy
 from argoverse.data_loading.argoverse_forecasting_loader import ArgoverseForecastingLoader
 from argoverse.map_representation.map_api import ArgoverseMap
 from skimage.transform import rotate
-from planning import model_generator
+from planning_n import model_generator
 
 class ArgoDataset(Dataset):
     def __init__(self, split, config, train=True,test=False):
@@ -99,7 +99,7 @@ class ArgoDataset(Dataset):
 
         data['graph'] = self.get_lane_graph(data)
         if self.test:
-            dfs, trj = model_generator(df,start=0) ## for testing data, the length only has 20, predict based on first 20 obs
+            dfs, trj = model_generator(df,start=19) ## for testing data, the length only has 20, predict based on first 20 obs
         else:
             dfs, trj = model_generator(df,start=19) ## for non-testing data, the length is 50
         
@@ -150,6 +150,7 @@ class ArgoDataset(Dataset):
             ctx_steps.append(steps[idcs])
 
         data = dict()
+        data['argo_id'] = int(self.avl.seq_list[idx].name[:-4]) #160547 ##need to save this info
         data['city'] = city
         data['trajs'] = [agt_traj] + ctx_trajs
         data['steps'] = [agt_step] + ctx_steps
@@ -391,7 +392,7 @@ class ArgoTestDataset(ArgoDataset):
     def __getitem__(self, idx): ## the function return should be here
         if 'preprocess' in self.config and self.config['preprocess']:
             data = self.split[idx]
-            data['argo_id'] = int(self.avl.seq_list[idx].name[:-4]) #160547
+            data['argo_id'] = int(self.avl.seq_list[idx].name[:-4]) #160547 ##need to save this info
 
             if self.train and self.config['rot_aug']:
                 #TODO: Delete Here because no rot_aug
