@@ -122,7 +122,7 @@ class FrenetPath:
         self.c = []
 
 
-def calc_frenet_paths(c_speed, c_d, c_d_d, c_d_dd, s0):
+def calc_frenet_paths(c_speed, c_d, c_d_d, c_d_dd, s0,target_speed):
     frenet_paths = []
 
     # generate path to each offset goal
@@ -142,8 +142,8 @@ def calc_frenet_paths(c_speed, c_d, c_d_d, c_d_dd, s0):
             fp.d_ddd = [lat_qp.calc_third_derivative(t) for t in fp.t]
 
             # Longitudinal motion planning (Velocity keeping)
-            for tv in np.arange(TARGET_SPEED - D_T_S * N_S_SAMPLE,
-                                TARGET_SPEED + D_T_S * N_S_SAMPLE, D_T_S):
+            for tv in np.arange(target_speed - D_T_S * N_S_SAMPLE,
+                                target_speed + D_T_S * N_S_SAMPLE, D_T_S):
                 tfp = copy.deepcopy(fp)
                 lon_qp = QuarticPolynomial(s0, c_speed, 0.0, tv, 0.0, Ti)
 
@@ -156,7 +156,8 @@ def calc_frenet_paths(c_speed, c_d, c_d_d, c_d_dd, s0):
                 Js = sum(np.power(tfp.s_ddd, 2))  # square of jerk
 
                 # square of diff from target speed
-                ds = (TARGET_SPEED - tfp.s_d[-1]) ** 2
+                ds = (target_speed - tfp.s_d[-1]) ** 2
+                # print('target speed',ds,target_speed)
 
                 tfp.cd = K_J * Jp + K_T * Ti + K_D * tfp.d[-1] ** 2
                 tfp.cv = K_J * Js + K_T * Ti + K_D * ds
@@ -231,8 +232,8 @@ def check_paths(fplist, ob):
     return [fplist[i] for i in ok_ind]
 
 
-def frenet_optimal_planning(csp, s0, c_speed, c_d, c_d_d, c_d_dd, ob):
-    fplist = calc_frenet_paths(c_speed, c_d, c_d_d, c_d_dd, s0)
+def frenet_optimal_planning(csp, s0, c_speed, c_d, c_d_d, c_d_dd, ob,target_speed):
+    fplist = calc_frenet_paths(c_speed, c_d, c_d_d, c_d_dd, s0,target_speed)
     fplist = calc_global_paths(fplist, csp)
     fplist = check_paths(fplist, ob)
 
