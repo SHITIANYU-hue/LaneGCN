@@ -77,13 +77,13 @@ def process_xy_back(x,y):
         data.append([x[i],y[i]])
     return np.asarray(data)
 
-def inc_length(data,up_to=50):
+def inc_length(data,up_to=50,ratio=1):
     length_cur=len(data)
     if length_cur>up_to:
         return data[0:up_to]
     else:
         x,y=process_xy(data)
-        d_x,d_y=np.gradient(x),np.gradient(y)
+        d_x,d_y=ratio*np.gradient(x),ratio*np.gradient(y)
 
         for i in range(up_to-length_cur):
             x=np.append(x,2*d_x[-1]+x[-1])
