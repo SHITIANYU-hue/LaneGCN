@@ -72,7 +72,7 @@ def train(config):
         drop_last=False,
     )
 
-    stores = [None for x in range(1)]
+    stores = [None for x in range(106)]
     t = time.time()
     for i, data in enumerate(tqdm(train_loader)):
         data = dict(data)
@@ -80,6 +80,7 @@ def train(config):
             store = dict()
             for key in [
                 "idx",
+                "argo_id",
                 "city",
                 "feats",
                 "ctrs",
@@ -136,6 +137,7 @@ def val(config):
             store = dict()
             for key in [
                 "idx",
+                "argo_id",
                 "city",
                 "feats",
                 "ctrs",
@@ -189,6 +191,7 @@ def test(config):
             store = dict()
             for key in [
                 "idx",
+                "argo_id",
                 "city",
                 "feats",
                 "ctrs",
